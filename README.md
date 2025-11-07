@@ -3,6 +3,7 @@
 - [PHP](#php)
   - [OOP](#oop)
   - [Encapsulation](#encapsulation)
+  - [Inheritance vs Composition](#inheritance-vs-composition)
   - [Abstract classes vs Interfaces](#abstract-classes-vs-interfaces)
   - [Generators](#generators)
     - [Key characteristics of generators in PHP](#key-characteristics-of-generators-in-php)
@@ -19,6 +20,8 @@
   - [Traits self and static](#traits-self-and-static)
     - [self within a Trait](#self-within-a-trait)
     - [static within a Trait (Late Static Binding)](#static-within-a-trait-late-static-binding)
+  - [Reflection](#reflection)
+    - [Why Use Reflection?](#why-use-reflection)
   - [Why Laravel Octane Fast?](#why-laravel-octane-fast)
   - [Authentication in PHP](#authentication-in-php)
   - [Testing in PHP](#testing-in-php)
@@ -27,12 +30,21 @@
     - [End-to-End (E2E) Testing](#end-to-end-e2e-testing)
     - [Feature Testing](#feature-testing)
     - [In summary](#in-summary)
+  - [Main difference between PHP7 and PHP8](#main-difference-between-php7-and-php8)
+    - [Major Features Introduced in PHP 8+](#major-features-introduced-in-php-8)
 - [DB](#db)
   - [SQL Parameters](#sql-parameters)
   - [Indexes and Index Types](#indexes-and-index-types)
     - [MySQL Index Types](#mysql-index-types)
     - [Types by Purpose](#types-by-purpose)
     - [Types by Storage Structure](#types-by-storage-structure)
+  - [Composite Index Ordering](#composite-index-ordering)
+    - [The Leftmost Prefix Rule](#the-leftmost-prefix-rule)
+    - [Why Order Matters for Performance](#why-order-matters-for-performance)
+  - [Foreign Key](#foreign-key)
+    - [How it Works](#how-it-works)
+    - [Key Benefits](#key-benefits)
+  - [Relationships](#relationships)
   - [Transactions](#transactions)
     - [Key characteristics of a database transaction](#key-characteristics-of-a-database-transaction)
   - [ACID](#acid)
@@ -57,6 +69,9 @@
     - [Locking Statements](#locking-statements)
     - [Purpose of Locking](#purpose-of-locking)
     - [Considerations](#considerations)
+  - [Explain statement](#explain-statement)
+    - [Purpose and Usage](#purpose-and-usage)
+    - [Key Columns in the EXPLAIN Output](#key-columns-in-the-explain-output)
   - [Consistency Table](#consistency-table)
   - [Sharding and Replication](#sharding-and-replication)
     - [Sharding](#sharding)
@@ -96,6 +111,13 @@
     - [Alternatives](#alternatives)
 - [Other](#other)
   - [Hashing vs Encryption vs Encoding](#hashing-vs-encryption-vs-encoding)
+  - [TCP vs UDP](#tcp-vs-udp)
+  - [JWT token explained](#jwt-token-explained)
+  - [List of common web vulnerabilities](#list-of-common-web-vulnerabilities)
+    - [Injection Flaws](#injection-flaws)
+    - [Broken Access Control and Authentication](#broken-access-control-and-authentication)
+    - [Misconfigurations and Data Handling](#misconfigurations-and-data-handling)
+    - [Other Major Vulnerabilities](#other-major-vulnerabilities)
 
 # PHP
 
@@ -141,6 +163,59 @@ the object's properties, allowing for validation and business logic to be applie
 * **Improved Modularity and Maintainability:** By encapsulating data and behavior, classes become more self-contained
 and independent. This makes code easier to understand, test, and maintain, as changes within a class's internal
 implementation are less likely to affect other parts of the application.
+
+
+## Inheritance vs Composition
+
+The main difference between inheritance and composition lies in how classes relate to each other:
+
+* **Inheritance** is an "is-a" relationship, where a subclass is a specialized version of a superclass, acquiring its
+behavior.
+* **Composition** is a "has-a" relationship, where a class contains references to other classes to use their
+functionality.
+
+In short, inheritance is about capability extension through a hierarchy, while composition is about building complex
+objects from simpler, independent objects.
+
+1. **Inheritance (The "Is-A" Relationship)**
+    Inheritance is a fundamental concept in Object-Oriented Programming where a new class (the child or subclass) is
+    derived from an existing class (the parent or superclass).
+
+    * **Relationship**: A child class is a type of parent class.
+    * **Mechanism**: The child class automatically gains all the public and protected methods and properties of the
+    parent class, and can override them or add new ones.
+    * **Tight Coupling**: It creates a strong dependency between the parent and child classes. Changes in the parent
+    class can inadvertently break the child class (the "fragile base class problem").
+    * **Use Case**: Ideal when you have a clear hierarchical relationship where the subclass genuinely specializes the
+    superclass.
+    * **Example**: A `Car` is a type of `Vehicle`. The `Car` class inherits common properties like speed and color from
+    `Vehicle`, but adds car-specific methods like `openTrunk()`.
+
+2. **Composition (The "Has-A" Relationship)**
+
+    Composition involves constructing complex classes by making them contain instances of other classes that provide
+    desired functionality.
+
+    * **Relationship**: The main class has a relationship with the other classes it uses.
+    * **Mechanism**: The main class holds references to other objects and delegates tasks to them. The main class
+    controls the creation and lifecycle of the contained objects.
+    * **Loose Coupling**: It creates flexible, loosely coupled systems. The contained objects can be easily swapped out
+    with other objects that have compatible interfaces without affecting the main class, as long as they adhere to the
+    same contract.
+    * **Use Case**: Ideal for building flexibility and reusing functionality without forcing a strict hierarchy. This
+    approach favors flexibility over rigid structure.
+    * **Example**: A `Car` class has a `Engine` object and has a `GPS` object. The `Car` object doesn't inherit from
+    `Engine` or `GPS`; it uses their functionalities internally.
+
+**Summary Table**
+
+| **Feature** 	 | **Inheritance**	                        | **Composition**                                 |
+|---------------|-----------------------------------------|-------------------------------------------------|
+| Relationship	 | "Is-A"	                                 | "Has-A"                                         |
+| Coupling	     | Tight	                                  | Loose                                           |
+| Flexibility	  | Less flexible (rigid hierarchy)         | 	Highly flexible (easy to swap components)      |
+| Code Reuse	   | Achieved by extending a superclass	     | Achieved by using instances of other classes    |
+| Principle	    | Encourages hierarchical classification	 | Follows the "Program to an interface" principle |
 
 
 ## Abstract classes vs Interfaces
@@ -572,6 +647,36 @@ incorporating class.
 methods of the specific class that is using the trait.
 
 
+## Reflection
+
+Reflection in PHP is the ability of a program to inspect, analyze, and modify its own structure, including classes,
+objects, methods, properties, and functions, at runtime (while the code is executing).
+
+It allows developers to get metadata about their code dynamically, which is typically not possible with standard static
+code analysis.
+
+### Why Use Reflection?
+
+Reflection is a powerful, advanced technique primarily used by framework and library developers to create flexible,
+generic code that can adapt to different user-defined classes without knowing their specific details beforehand.
+
+**Common use cases include:**
+
+* **Dependency Injection (DI) Containers**: Frameworks like Laravel and Symfony use reflection to automatically
+determine which classes a constructor needs (via type hinting) and inject the required dependencies.
+* **Automated Testing**: Reflection allows testing tools to access and invoke private or protected methods and
+properties of a class, which is crucial for achieving high code coverage during unit testing without changing the code's
+visibility.
+* **Documentation Generators**: Tools that automatically generate documentation can use reflection to inspect classes,
+methods, and their associated PHPDoc comments and build structured documentation.
+* **Dynamic Object Creation and Method Invocation**: You can create an instance of a class or call a method when the
+class or method name is stored in a simple string variable, which is useful for plugin systems or routing mechanisms.
+* **Serialization and ORMs**: Libraries that convert objects into other formats (like JSON or database rows) use
+reflection to inspect object properties and set their values dynamically.
+
+While powerful, reflection can have a performance impact due to the overhead of introspection, so it is typically used
+in core framework logic rather than everyday application code.
+
 ## Why Laravel Octane Fast?
 
 Laravel Octane achieves significantly faster performance compared to traditional PHP-FPM setups primarily by optimizing
@@ -733,6 +838,43 @@ remove items from their wishlist.
 including multiple functional components and external integrations.
 
 
+## Main difference between PHP7 and PHP8
+
+The main differences between PHP 7.4 and PHP 8+ are significant performance improvements (largely due to the
+Just-In-Time compiler), enhanced type safety and stricter error handling, and numerous new developer features.
+
+PHP 7.4 is also past its End-of-Life (EOL), meaning it no longer receives official security support, making PHP 8+ a
+necessary upgrade for security.
+
+**Key Differences at a Glance**
+
+|**Feature**| 	**PHP 7.4** | 	**PHP 8+ (8.0, 8.1, 8.2, 8.3)** |
+|-----------|---------------|----------------------------------|
+|Performance	|Fast (introduced significant gains over PHP 5.x)	|Significantly faster due to the Just-In-Time (JIT) compiler.|
+|Type System	|Weaker type checking; more implicit type coercion.	|Tighter type safety; many previous warnings are now TypeErrors.|
+|Error Handling	|More silent failures and warnings.	|More robust error handling; many errors throw exceptions instead of warnings.|
+|Syntax/Features	|Lacks modern syntax	|Introduces features like Named Arguments, Union Types, Attributes (Annotations), and the `match` expression.|
+|Support Status	|End-of-Life (no security updates)	|Actively supported with ongoing security and feature updates.|
+
+
+### Major Features Introduced in PHP 8+
+
+* **Just-In-Time (JIT) Compiler**: A major performance feature that compiles hot parts of PHP code into machine code,
+resulting in speed improvements, especially for CPU-intensive tasks like loops and mathematical calculations.
+* **Named Arguments**: Allows passing arguments to functions based on their parameter names, making code more readable
+and allowing you to skip optional parameters.
+* **Attributes (Annotations)**: A way to add metadata to classes, methods, and properties, often used by frameworks for
+configuration instead of docblocks.
+* **Union Types**: Allows declaring that a function parameter or return value can accept more than one type (e.g.,
+`int|float|string`).
+* **match expression**: A new, safer, and more concise alternative to the switch statement.
+* **Constructor Property Promotion**: Shorthand syntax for defining class properties and their corresponding constructor
+arguments in one go.
+* **Nullsafe Operator (`?->`)**: A simpler way to handle nested null checks, stopping execution if a null value is
+encountered.
+
+Upgrading from PHP 7.4 is highly recommended for improved security, better performance, and access to modern language features.
+
 
 # DB
 
@@ -815,6 +957,132 @@ because they use a hash function to directly locate data in one step. However, t
 sorting, as the hashed values are not stored in a predictable order.
 * **R-Tree**: The data structure used for `SPATIAL` indexes to efficiently handle geometric data. 
 
+
+## Composite Index Ordering
+
+The order of columns in a composite (multi-column) index in MySQL is crucial because it directly affects whether the
+index can be used efficiently (or at all) for various `SELECT` queries. This is governed by the "leftmost prefix rule".
+
+### The Leftmost Prefix Rule
+
+A composite index on (`column_A`, `column_B`, `column_C`) creates a sorted structure that is ordered first by `column_A`,
+then by `column_B` (within `A`), and finally by `column_C` (within `B`). The database can efficiently use this index if
+the query criteria involve the leftmost columns of the index in sequence.
+
+| **Query Example** 	                | **Index Usable?**	 | **Explanation**                                                                                                                                              |
+|------------------------------------|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WHERE A = 1`	                     | Yes	               | Uses only the first column, which is the leftmost prefix.                                                                                                    |
+| `WHERE A = 1 AND B = 2`	           | Yes	               | Uses the first two columns (leftmost prefix). The order in the WHERE clause does not matter; the optimizer uses the index order.                             |
+| `WHERE A = 1 AND B = 2 AND C = 3`	 | Yes	               | Uses all three columns for optimal filtering.                                                                                                                |
+| `WHERE B = 2 AND C = 3`	           | No	                | Cannot use the index because the leading column (A) is missing from the condition. The database doesn't know where to start looking in the sorted structure. |
+| `WHERE C = 3`	                     | No	                | Cannot use the index for the same reason as above.                                                                                                           |
+
+### Why Order Matters for Performance
+
+The choice of column order determines the index's efficiency in narrowing down results:
+
+* **Filtering (`WHERE` clause)**: Placing columns used for equality conditions (`=`) first is generally best for maximum
+filtering efficiency.
+* **Sorting (`ORDER BY` clause)**: The index can also be used to satisfy an `ORDER BY` clause, avoiding an expensive
+separate sorting step (`Using filesort` in `EXPLAIN` output). The columns in the `ORDER BY` clause must match the index
+order (or the reverse order, e.g., `ASC` or `DESC` for all columns).
+* **Selectivity**: A common strategy is to put the column with the highest cardinality (the most distinct values) first,
+as it helps the database engine filter the largest number of rows with the fewest index lookups.
+
+In summary, the order of columns in your composite index must match the access patterns of your most critical queries to
+leverage the index effectively and maximize performance.
+
+## Foreign Key
+
+A foreign key in MySQL is a column (or a collection of columns) in one table that links to the primary key in another
+table. Its main purpose is to establish and enforce a link between the data in two tables, ensuring data consistency and
+maintaining referential integrity.
+
+### How it Works
+
+**A foreign key relationship involves two tables:**
+
+* The parent table (or referenced table) contains the primary key.
+* The child table (or referencing table) contains the foreign key, which points to the parent's primary key.
+
+The foreign key constraint ensures that any value inserted into the child table's foreign key column must already exist
+as a value in the parent table's primary key column. This prevents "orphaned" records, for example, an order that is
+associated with a customer who doesn't exist in the customers table.
+
+### Key Benefits
+
+* **Enforces Data Integrity**: Ensures valid relationships between tables, preventing invalid or inconsistent data from
+entering the database.
+* **Prevents Orphan Records**: Stops users from deleting a parent record (e.g., a customer) if there are still dependent
+child records (e.g., existing orders) that refer to it.
+* **Better Data Management**: Helps in structuring the database logically and supports automated actions like
+`ON DELETE CASCADE` (automatically deleting related orders when a customer is deleted) or `ON UPDATE CASCADE`.
+* **Improved Query Performance**: Foreign key columns are often used in `JOIN` operations, and indexing them allows the
+database engine to quickly find related data across tables.
+
+
+## Relationships
+
+Database relationships are the formal links that exist between two or more tables in a relational database management
+system (RDBMS). They define how data in one table corresponds to data in another, allowing developers to structure
+databases efficiently and avoid data duplication.
+
+**There are three primary types of database relationships:**
+
+1. **One-to-One (1:1)**
+    A one-to-one relationship means a single record in the first table is linked to exactly one record in the second table, 
+    and vice versa. This type of relationship is less common than others but useful for specific scenarios.
+
+    **Why use it?**
+
+    * **To split large tables**: If a table has many columns, you can separate the less frequently accessed columns into
+    a second table to improve performance.
+    * **To store sensitive data securely**: You might place sensitive user information in a separate table that has
+    stricter access controls.
+
+    **Example:**
+
+    A `Employees` table and a `EmployeeDetails` table. Each employee has exactly one set of detailed information (e.g.,
+    salary, SSN), and each set of details belongs to only one employee. The `EmployeeID` would be the link (foreign key)
+    in both tables.
+
+2. **One-to-Many (1:M)**
+    A one-to-many relationship means a single record in the first table can be linked to one or more records in the
+    second table, but a single record in the second table can only link back to one record in the first table. This is
+    the most common type of relationship.
+
+    **Why use it?**
+
+    * **To reduce redundancy**: Prevents repeating information that belongs to the "one" side of the relationship
+    across many rows in the "many" side.
+
+    **Example:**
+
+    A `Departments` table and a `Employees` table. A single department has many employees, but each employee belongs to
+    only one department. The `DepartmentID` in the `Employees` table would be the foreign key pointing to the
+    `Departments` table's primary key.
+
+3. **Many-to-Many (M:M)**
+    A many-to-many relationship means a single record in the first table can be linked to one or more records in the
+    second table, and a single record in the second table can also be linked to one or more records in the first table.
+
+    **Why use it?**
+
+    * **To model complex interactions**: Used when records from both sides of the relationship can interact flexibly.
+
+    **Example:**
+
+    A `Students` table and a `Courses` table. A student can enroll in multiple courses, and a course has multiple
+    students enrolled in it.
+
+    **Implementing Many-to-Many:**
+
+    Relational databases cannot directly implement a many-to-many relationship. Instead, they use a third table, often 
+    called a junction table, link table, or pivot table. This junction table effectively breaks the M:M relationship
+    into two separate 1:M relationships.
+
+    In the Students/Courses example, an `Enrollment` junction table would store pairs of `StudentID` and `CourseID`,
+    linking the two primary tables via foreign keys.
 
 ## Transactions
 
@@ -1138,6 +1406,48 @@ standstill. MySQL detects and resolves deadlocks by rolling back one of the tran
 concurrency.
 * **Privileges**: Users require LOCK TABLES and SELECT privileges to use table locking.
 
+
+## Explain statement
+
+`EXPLAIN` in MySQL is a crucial command-line tool used for analyzing and optimizing the performance of SQL queries. When
+prepended to a `SELECT`, `DELETE`, `INSERT`, `REPLACE`, or `UPDATE` statement, it provides a detailed breakdown of the
+query execution plan - that is, how MySQL's optimizer intends to process the statement without actually running it (for
+standard `EXPLAIN`).
+
+### Purpose and Usage
+
+The main goal of using `EXPLAIN` is to identify bottlenecks and inefficiencies in a query's execution strategy,
+primarily to answer questions like:
+
+* Is the query using the most efficient indexes?
+* Are full table scans (which are slow) being performed unnecessarily?
+* In what order are the tables being joined?
+* How many rows is MySQL estimating it needs to examine to fulfill the query?
+
+By interpreting the output, developers can make informed decisions to optimize their queries (e.g., adding appropriate
+indexes, rewriting parts of the query) and improve overall database performance.
+
+### Key Columns in the EXPLAIN Output
+
+The output of the `EXPLAIN` command is presented in a table format with several columns, each providing specific
+insights:
+
+| **Column** 	                           | **Description**                                                                                                                                                                                                  |
+|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id	                                    | A unique identifier for each step in the execution plan.                                                                                                                                                         |
+| select_type	                           | The type of the `SELECT` query portion (e.g., `SIMPLE`, `PRIMARY`, `SUBQUERY`).                                                                                                                                  |
+| table	                                 | The name of the table being accessed in that step.                                                                                                                                                               |
+| type	                                  | The join type or access method used to read data from the table. The ideal types are `const`, `eq_ref`, `ref`, and `range` (using an index effectively). A type of ALL indicates an inefficient full table scan. |
+| possible_keys	                         | The indexes that MySQL could potentially use for the query.                                                                                                                                                      |
+| key	                                   | The actual index that MySQL decided to use.                                                                                                                                                                      |
+| rows	                                  | An estimate of the number of rows MySQL must examine to execute the query. Lower is better.                                                                                                                      |
+| Extra	                                 | Additional details about how the query is executed, providing critical hints like "Using index" (good, covered index used) or "Using filesort" (bad, an extra sorting pass was needed).                          |
+
+**EXPLAIN ANALYZE (MySQL 8.0.18+)**
+
+For more detailed analysis, MySQL introduced `EXPLAIN ANALYZE`, which actually runs the query and provides real-time
+statistics (actual execution time, actual number of rows returned) in addition to the estimated plan. This is useful for
+comparing the optimizer's estimates with the query's actual runtime performance.
 
 ## Consistency Table
 
@@ -1658,3 +1968,114 @@ the process is reversible and requires a secret key.
     * **Key Feature**: It is easily reversible without requiring any special key or secret. It is not a security measure.
     * **Purpose**: To format data safely for transmission over systems that might not handle binary or special characters correctly (e.g., sending an image file over an email system designed only for plain text).
     * **Examples**: Base64, URL encoding, ASCII.
+
+
+## TCP vs UDP
+
+**TCP** stands for Transmission Control Protocol, and it is a connection-oriented, reliable method of data transfer.
+**UDP** stands for User Datagram Protocol, and it is a connectionless, less reliable, but faster method of data transfer.
+
+**The primary difference is the trade-off between speed and reliability:**
+
+| **Feature**             | 	**TCP (Transmission Control Protocol)**                                                                                             | 	**UDP (User Datagram Protocol)**                                                                                 |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Connection	             | Connection-oriented; establishes a formal connection (handshake) before sending data.	                                               | Connectionless; sends data without establishing a connection or checking if the receiver is ready.                |
+| Reliability	            | Highly reliable; guarantees all data is delivered in the correct order through sequence numbers and retransmission of lost packets.	 | Less reliable; does not guarantee delivery or order, and lost packets are not retransmitted.                      |
+| Speed	                  | Slower due to the overhead of connection setup, error checking, and acknowledgments.	                                                | Faster due to less overhead and a simpler, "fire-and-forget" approach.                                            |
+| Error Handling	         | Extensive error-checking and recovery mechanisms.	                                                                                   | Only basic error checking using checksums.                                                                        |
+| Use Cases	              | Web browsing (HTTP/HTTPS), email (SMTP), and file transfers (FTP), where accuracy is critical.	                                      | Online gaming, live streaming, and voice over IP (VoIP), where speed is more important than occasional data loss. |
+
+In essence, TCP is like sending a package with a tracking number and signature confirmation, ensuring it arrives exactly
+as sent. UDP is like mailing a postcard, which is faster but offers no guarantee of arrival or condition. 
+
+
+## JWT token explained
+
+A **JSON Web Token (JWT)** is an open standard for securely transmitting information between parties as a compact,
+self-contained JSON object. It is primarily used for stateless authentication, allowing a server to verify a user's
+identity and authorization without needing to store session information on the server itself.
+
+A JWT token in its compact form consists of three parts, separated by dots (`.`), each Base64url-encoded:
+
+1. **Header**
+    * **Purpose**: Contains metadata about the token itself.
+    * **Contents**: It typically specifies the token type, which is `JWT`, and the algorithm used for the signature,
+    such as HMAC SHA256 (HS256) or RSA (RS256).
+    * **Example (decoded)**:
+    ```json
+    {
+        "alg": "HS256",
+        "typ": "JWT"
+    }
+    ```
+
+2. **Payload (Claims)**
+    * **Purpose**: Contains the actual data, or "claims," which are statements about an entity (typically the user) and
+    additional data. The data is encoded, not encrypted, meaning anyone can read it, so sensitive information should not
+    be put here.
+    * **Contents**: Claims can be registered (predefined, but not mandatory, e.g., iss for issuer, exp for expiration
+    time, sub for subject), public (defined by the user), or private (custom claims shared between parties).
+    * **Example (decoded)**:
+    ```json
+    {
+        "sub": "1234567890",
+        "name": "John Doe",
+        "iat": 1516239022,
+        "exp": 1516242622
+    }
+    ```
+
+3. **Signature**
+    * **Purpose**: Ensures the token's integrity and authenticity. It verifies that the sender is legitimate and that
+    the token hasn't been tampered with in transit.
+    * **Contents**: It is created by taking the encoded header, the encoded payload, a secret key known only to the
+    server, and applying the algorithm specified in the header. The server receiving the JWT uses the same process and
+    secret key to recreate the signature and compare it to the one in the token; if they match, the token is valid.
+
+The final JWT string looks like this: `encodedHeader.encodedPayload.signature`. 
+
+
+## List of common web vulnerabilities
+
+The [Open Web Application Security Project (OWASP)](https://owasp.org/) Top 10 is the industry standard for identifying
+the most critical web application security risks.
+
+**Here are the common web-related vulnerabilities based on the OWASP 2021 list (and anticipated 2025 updates):**
+
+### Injection Flaws
+
+* **SQL Injection (SQLi)**: Occurs when malicious SQL code is inserted into input fields and then executed by the
+application's database, potentially allowing an attacker to view, modify, or delete data.
+* **Cross-Site Scripting (XSS)**: Attackers inject malicious scripts (usually JavaScript) into web pages viewed by other
+users. This can lead to session hijacking, redirection to malicious sites, or unauthorized actions.
+* **Command Injection**: When an application improperly validates user input and includes it in a system command,
+allowing an attacker to execute arbitrary commands on the server.
+
+### Broken Access Control and Authentication
+
+* **Broken Access Control**: Flaws in access control mechanisms that allow users to access functionality or data they
+shouldn't be able to (e.g., accessing administrative panels or other users' data by changing a URL parameter).
+* **Identification and Authentication Failures**: Weak authentication mechanisms, such as weak passwords, insecure
+credential storage, or missing multi-factor authentication (MFA), can enable attackers to impersonate users.
+* **Cross-Site Request Forgery (CSRF)**: An attacker tricks a victim's browser into performing unwanted actions on a
+trusted website where the user is currently authenticated.
+* **Insecure Direct Object References (IDOR)**: A type of access control vulnerability where an application exposes a
+direct reference to an internal object (like a database key or filename) without verifying the user's authorization to access it.
+
+### Misconfigurations and Data Handling
+
+* **Security Misconfiguration**: Insecure default settings, incomplete configurations, exposed administrative interfaces,
+unused features, or misconfigured cloud storage can create easy entry points for attackers.
+* **Cryptographic Failures (Sensitive Data Exposure)**: Occurs when sensitive data is not properly encrypted at rest or
+in transit, leading to exposure of information like passwords or financial details in clear text.
+* **Server-Side Request Forgery (SSRF)**: A vulnerability that allows an attacker to trick the server into making
+requests to an unintended location, potentially accessing internal network services or cloud metadata.
+
+### Other Major Vulnerabilities
+
+* **Vulnerable and Outdated Components**: Using libraries, frameworks, or other third-party software with known security
+flaws leaves the entire application vulnerable.
+* **Insufficient Logging and Monitoring**: Without proper logging and real-time monitoring, security breaches may go
+undetected for a long time, allowing attackers to maintain persistence and extract more data.
+* **Insecure Design**: Flaws in the fundamental architecture and design of an application can lead to a host of other
+vulnerabilities that are difficult to fix later.

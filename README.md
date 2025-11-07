@@ -149,13 +149,13 @@ The main difference is that an abstract class can have both concrete (implemente
 properties, allowing for partial implementation and shared code. An interface can only define method signatures
 and constants, acting purely as a contract for behavior.
 
-| **Feature**                         | **Abstract Class	**                                                                                 | **Interface**                                                                                                   |
-|-------------------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| **Method Implementation**           | 	Can have both abstract (no body) and concrete (with body) methods.                                 | 	All methods are abstract by default and cannot have a body/implementation.                                     |
-| **Properties**                      | 	Can define properties (instance variables) with any access modifier (public, protected, private).	 | Cannot have properties, only constants are allowed.                                                             |
-| **Inheritance**	                    | A class can only extend a single abstract class (single inheritance).	                              | A class can implement multiple interfaces (multiple inheritance of behavior).                                   |
-| **Access Modifiers**	               | Can use all access modifiers (public, protected, private) for methods and properties.	              | All methods must be public.                                                                                     |
-| **Relationship Type**               | 	Represents an "is a" relationship (e.g., a Dog is a Mammal abstract class).	                       | Represents a "can do" or "has a capability" relationship (e.g., a Dog can implement the Retrievable interface). |
+| **Feature**                           | **Abstract Class**                                                                                  | **Interface**                                                                                                   |
+|---------------------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| **Method Implementation**             | 	Can have both abstract (no body) and concrete (with body) methods.                                 | 	All methods are abstract by default and cannot have a body/implementation.                                     |
+| **Properties**                        | 	Can define properties (instance variables) with any access modifier (public, protected, private).	 | Cannot have properties, only constants are allowed.                                                             |
+| **Inheritance**	                      | A class can only extend a single abstract class (single inheritance).	                              | A class can implement multiple interfaces (multiple inheritance of behavior).                                   |
+| **Access Modifiers**	                 | Can use all access modifiers (public, protected, private) for methods and properties.	              | All methods must be public.                                                                                     |
+| **Relationship Type**                 | 	Represents an "is a" relationship (e.g., a Dog is a Mammal abstract class).	                       | Represents a "can do" or "has a capability" relationship (e.g., a Dog can implement the Retrievable interface). |
 
 **When to use which:**
 

@@ -14,6 +14,7 @@
     - [Coroutine types by implementation](#coroutine-types-by-implementation)
     - [Coroutine types by control flow](#coroutine-types-by-control-flow)
   - [Closures](#closures)
+  - [Closures vs Callbacks](#closures-vs-callbacks)
   - [Traits](#traits)
     - [Features of Traits](#features-of-traits)
     - [Summary of Traits Features](#summary-of-traits-features)
@@ -360,7 +361,119 @@ variables are passed by value by default, but can be passed by reference using t
 that class, allowing it to access class properties and methods. This behavior can be explicitly managed using
 `Closure::bindTo()` or `Closure::bind()`.
 * **`Closure` Class**: Internally, PHP represents closures as objects of the `Closure` class. This class provides
-methods like `bindTo()`, `bind()`, and `call()` for manipulating the closure's scope and binding.`
+methods like `bindTo()`, `bind()`, and `call()` for manipulating the closure's scope and binding.
+
+
+## Closures vs Callbacks
+
+A **callback** is a concept of passing executable code to a function, while a `Closure` is a specific, object-oriented
+implementation of an anonymous function that can access variables from its surrounding scope. A `Closure` is a specific
+*type* of callback.
+
+Here are examples illustrating the difference in usage and capabilities.
+
+1. **The Callback Concept**
+
+    A callback can be many different things, unified by the idea that it's code executed by another function. We often
+    use the built-in PHP function `array_map()` to demonstrate this.
+
+    **Example A: Named Function Callback (Not a Closure)**
+
+    This uses a standard, globally defined function as a callback.
+
+    ```php
+    // Define a standard function
+    function square($n) {
+        return $n * $n;
+    }
+
+    $numbers = [1, 2, 3, 4];
+
+    // Pass the function name as a string callback to array_map()
+    $squared_numbers = array_map('square', $numbers);
+
+    print_r($squared_numbers);
+    // Output: Array ( [0] => 1 [1] => 4 [2] => 9 [3] => 16 )
+   ```
+
+    Here, `'square'` is a **callback**. It is not a `Closure` object.
+
+    **Example B: Method Callback (Not a Closure)**
+
+    You can use a class method as a callback, passed as an array structure.
+
+    ```php
+    class Calculator {
+        public static function multiplyByTwo($n) {
+            return $n * 2;
+        }
+    }
+
+    $numbers = [1, 2, 3, 4];
+
+    // Pass a static method as an array callback to array_map()
+    $doubled_numbers = array_map(['Calculator', 'multiplyByTwo'], $numbers);
+
+    print_r($doubled_numbers);
+    // Output: Array ( [0] => 2 [1] => 4 [2] => 6 [3] => 8 )
+    ```
+
+    Here, `['Calculator', 'multiplyByTwo']` is a **callback**. It is not a `Closure` object.
+
+2. **The Closure Object (A State-Aware Callback)**
+
+    A `Closure` is a special object that can "capture" variables from the scope where it was defined using the `use`
+    keyword. This makes them stateful and highly flexible.
+
+    **Example C: Anonymous Function/Closure Callback**
+
+    This uses an anonymous function directly within the function call.
+
+    ```php
+    $numbers = [1, 2, 3, 4];
+
+    // Pass an anonymous function (which is a Closure) as a callback
+    $doubled_numbers = array_map(function($n) {
+        return $n * 2;
+    }, $numbers);
+
+    print_r($doubled_numbers);
+    // Output: Array ( [0] => 2 [1] => 4 [2] => 6 [3] => 8 )
+    ```
+
+    Here, `function($n) { ... }` is both a callback (it fulfills the role of executable code passed as an argument) and
+    a **`Closure`** (it is an instance of the `Closure` class).
+
+    **Example D: Closure with Scope Inheritance (use)**
+
+    This is where the power of the `Closure` truly shines and differentiates it from simple named function callbacks.
+
+    ```php
+    $factor = 3;
+    $numbers = [1, 2, 3, 4];
+
+    // The 'use ($factor)' keyword "closes over" the local variable $factor
+    $tripled_numbers = array_map(function($n) use ($factor) {
+        return $n * $factor;
+    }, $numbers);
+
+    print_r($tripled_numbers);
+    // Output: Array ( [0] => 3 [1] => 6 [2] => 9 [3] => 12 )
+    ```
+
+    The anonymous function in Example D is a `Closure`. It has stored the value of `$factor` within itself, even if that
+    `$factor` variable were to change or the original surrounding scope vanished. A simple named function callback
+    cannot do this natively; it would require `$factor` to be a global variable or a class property.
+
+**Summary of the Distinction**
+
+| **Feature** 	                | **Callback**	                                                                 | **Closure**                                                  |
+|------------------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------|
+| Is it a concept?             | 	Yes, it's the idea of passing executable code.	                              | No, it's a specific object type (Closure class).             |
+| Can access outer scope?	     | No, not inherently (unless global).	                                          | Yes, via the use keyword.                                    |
+| Examples of syntax	          | `'func_name'`, `['Class', 'method']`, `[$object, 'method']`, or a `Closure`.	 | `function() use ($var) { ... }`                              |
+| All closures are callbacks?	 | N/A	                                                                          | Yes                                                          |
+| All callbacks are closures?	 | N/A	                                                                          | No (e.g., a simple string 'square' is not a Closure object). |
 
 
 ## Traits
